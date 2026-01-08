@@ -43,7 +43,7 @@ const FloatingMenu: React.FC = () => {
       <div className={menuItemClass}>
         <Phone size={20} />
         <div className={popupClass}>
-          <div className="text-brand-700 font-bold text-lg">{companyInfo.tel}</div>
+          <div className="text-brand-700 font-bold text-lg">{companyInfo.mobile}</div>
           <div className="text-gray-500 text-xs">7x24小时服务热线</div>
         </div>
       </div>

@@ -1,12 +1,17 @@
-
 import React, { useState } from 'react';
 import { useGlobalContext } from '../../context/GlobalContext';
-import { Service, ServiceDetailData, ServiceTab } from '../../types';
-import { Edit, Trash2, Plus, ChevronDown, ChevronRight, Save } from 'lucide-react';
+import { Service, ServiceDetailData, ServiceTab, ServicePageData, ServiceProcessStep, MaintenanceItem } from '../../types';
+import { Edit, Trash2, Plus, ChevronDown, ChevronRight, Save, Layout, List } from 'lucide-react';
 import RichTextEditor from '../../components/admin/RichTextEditor';
 
 const ServiceManager: React.FC = () => {
-  const { services, setServices, serviceDetails, setServiceDetails } = useGlobalContext();
+  const { 
+    services, setServices, 
+    serviceDetails, setServiceDetails,
+    servicePageData, setServicePageData 
+  } = useGlobalContext();
+  
+  const [activeTab, setActiveTab] = useState<'services' | 'page_content'>('services');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   // --- Service List Management ---
@@ -80,101 +85,263 @@ const ServiceManager: React.FC = () => {
     });
   };
 
+  // --- Page Content Management ---
+  const updatePageData = (field: keyof ServicePageData, val: any) => {
+    setServicePageData({ ...servicePageData, [field]: val });
+  };
+
+  const updateProcessStep = (idx: number, field: keyof ServiceProcessStep, val: any) => {
+    const newSteps = [...servicePageData.processSteps];
+    newSteps[idx] = { ...newSteps[idx], [field]: val };
+    updatePageData('processSteps', newSteps);
+  };
+
+  const updateMaintenanceItem = (idx: number, val: string) => {
+    const newItems = [...servicePageData.maintenanceItems];
+    newItems[idx] = { ...newItems[idx], text: val };
+    updatePageData('maintenanceItems', newItems);
+  };
+
+  const addMaintenanceItem = () => {
+    const newItem: MaintenanceItem = { id: `m_${Date.now()}`, text: '新维护事项' };
+    updatePageData('maintenanceItems', [...servicePageData.maintenanceItems, newItem]);
+  };
+
+  const removeMaintenanceItem = (idx: number) => {
+    const newItems = servicePageData.maintenanceItems.filter((_, i) => i !== idx);
+    updatePageData('maintenanceItems', newItems);
+  };
+
   // --- Render ---
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">服务支持管理</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Col: Service List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold">服务列表</h3>
-            <button onClick={handleAddService} className="text-sm bg-brand-600 text-white px-2 py-1 rounded flex items-center gap-1">
-              <Plus size={14} /> 新增
-            </button>
-          </div>
-          <div className="space-y-2">
-            {services.map(srv => (
-              <div 
-                key={srv.id} 
-                onClick={() => setSelectedServiceId(srv.id)}
-                className={`p-3 rounded border cursor-pointer transition-colors ${selectedServiceId === srv.id ? 'border-brand-500 bg-brand-50' : 'border-gray-100 hover:bg-gray-50'}`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <input 
-                    className="font-bold bg-transparent border-b border-transparent focus:border-brand-300 outline-none w-full mr-2"
-                    value={srv.title}
-                    onChange={(e) => updateServiceBasic(srv.id, 'title', e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteService(srv.id); }} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
-                </div>
-                <input 
-                    className="text-xs text-gray-500 bg-transparent w-full outline-none"
-                    value={srv.description}
-                    onChange={(e) => updateServiceBasic(srv.id, 'description', e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Col: Details Editor */}
-        <div className="lg:col-span-2 space-y-6">
-          {selectedServiceId && currentDetail ? (
-            <>
-              {/* Detail Header */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="font-bold border-b pb-2 mb-4">详情页头部信息</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="text-xs text-gray-500">大标题</label>
-                    <input className="w-full border rounded p-2" value={currentDetail.title} onChange={e => updateDetailHeader('title', e.target.value)} />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500">副标题</label>
-                    <input className="w-full border rounded p-2" value={currentDetail.subtitle} onChange={e => updateDetailHeader('subtitle', e.target.value)} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Tabs Manager */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold">内容标签页 (Tabs)</h3>
-                  <button onClick={addTab} className="text-sm border border-brand-600 text-brand-600 px-3 py-1 rounded hover:bg-brand-50">添加标签页</button>
-                </div>
-
-                <div className="space-y-6">
-                  {currentDetail.tabs.map((tab, idx) => (
-                    <TabEditor 
-                      key={tab.id} 
-                      tab={tab} 
-                      onUpdate={(t) => updateTab(idx, t)} 
-                      onDelete={() => removeTab(idx)} 
-                    />
-                  ))}
-                  {currentDetail.tabs.length === 0 && <p className="text-gray-400 text-center py-4">暂无内容，请添加标签页</p>}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="h-full flex items-center justify-center text-gray-400">
-              请选择左侧服务进行编辑
-            </div>
-          )}
-        </div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">服务支持管理</h1>
+        <button 
+          onClick={() => {
+            alert('所有更改已保存成功！');
+          }}
+          className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 shadow-md transition-all"
+        >
+          <Save size={18} />
+          保存所有更改
+        </button>
       </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-4 mb-8 border-b border-gray-200 pb-1">
+        <button 
+          onClick={() => setActiveTab('services')}
+          className={`pb-3 px-4 font-bold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'services' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          <List size={18} /> 服务项目列表
+        </button>
+        <button 
+          onClick={() => setActiveTab('page_content')}
+          className={`pb-3 px-4 font-bold flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'page_content' ? 'border-brand-600 text-brand-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >
+          <Layout size={18} /> 页面内容配置
+        </button>
+      </div>
+
+      {activeTab === 'services' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Col: Service List */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold">服务列表</h3>
+              <button onClick={handleAddService} className="text-sm bg-brand-600 text-white px-2 py-1 rounded flex items-center gap-1">
+                <Plus size={14} /> 新增
+              </button>
+            </div>
+            <div className="space-y-2">
+              {services.map(srv => (
+                <div 
+                  key={srv.id} 
+                  onClick={() => setSelectedServiceId(srv.id)}
+                  className={`p-3 rounded border cursor-pointer transition-colors ${selectedServiceId === srv.id ? 'border-brand-500 bg-brand-50' : 'border-gray-100 hover:bg-gray-50'}`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <input 
+                      className="font-bold bg-transparent border-b border-transparent focus:border-brand-300 outline-none w-full mr-2"
+                      value={srv.title}
+                      onChange={(e) => updateServiceBasic(srv.id, 'title', e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteService(srv.id); }} className="text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                  </div>
+                  <input 
+                      className="text-xs text-gray-500 bg-transparent w-full outline-none"
+                      value={srv.description}
+                      onChange={(e) => updateServiceBasic(srv.id, 'description', e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Col: Details Editor */}
+          <div className="lg:col-span-2 space-y-6">
+            {selectedServiceId && currentDetail ? (
+              <>
+                {/* Detail Header */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="font-bold border-b pb-2 mb-4">详情页头部信息</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="text-xs text-gray-500">大标题</label>
+                      <input className="w-full border rounded p-2" value={currentDetail.title} onChange={e => updateDetailHeader('title', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500">副标题</label>
+                      <input className="w-full border rounded p-2" value={currentDetail.subtitle} onChange={e => updateDetailHeader('subtitle', e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs Manager */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold">内容标签页 (Tabs)</h3>
+                    <button onClick={addTab} className="text-sm border border-brand-600 text-brand-600 px-3 py-1 rounded hover:bg-brand-50">添加标签页</button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {currentDetail.tabs.map((tab, idx) => (
+                      <TabEditor 
+                        key={tab.id} 
+                        tab={tab} 
+                        onUpdate={(t) => updateTab(idx, t)} 
+                        onDelete={() => removeTab(idx)} 
+                      />
+                    ))}
+                    {currentDetail.tabs.length === 0 && <p className="text-gray-400 text-center py-4">暂无内容，请添加标签页</p>}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400">
+                请选择左侧服务进行编辑
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Page Content Editor */
+        <div className="max-w-4xl mx-auto space-y-8">
+          
+          {/* Service Process Config */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold mb-6 border-b pb-2">流程区域配置</h3>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">区域标题</label>
+              <input 
+                className="w-full border rounded p-2" 
+                value={servicePageData.processTitle} 
+                onChange={(e) => updatePageData('processTitle', e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-gray-700">流程步骤 (固定6步)</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {servicePageData.processSteps.map((step, idx) => (
+                  <div key={idx} className="border p-4 rounded-lg bg-gray-50">
+                    <div className="text-brand-600 font-bold mb-2">步骤 0{step.step}</div>
+                    <div className="space-y-2">
+                      <input 
+                        className="w-full border rounded p-2 text-sm" 
+                        placeholder="标题" 
+                        value={step.title}
+                        onChange={(e) => updateProcessStep(idx, 'title', e.target.value)}
+                      />
+                      <input 
+                        className="w-full border rounded p-2 text-sm" 
+                        placeholder="描述" 
+                        value={step.desc}
+                        onChange={(e) => updateProcessStep(idx, 'desc', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Maintenance Config */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-bold mb-6 border-b pb-2">维护保养区域配置</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">区域标题</label>
+                <input 
+                  className="w-full border rounded p-2" 
+                  value={servicePageData.maintenanceTitle} 
+                  onChange={(e) => updatePageData('maintenanceTitle', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">右侧图片标题</label>
+                <input 
+                  className="w-full border rounded p-2" 
+                  value={servicePageData.maintenanceImageTitle} 
+                  onChange={(e) => updatePageData('maintenanceImageTitle', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1">右侧图片 URL</label>
+              <div className="flex gap-2">
+                <input 
+                  className="flex-1 border rounded p-2" 
+                  value={servicePageData.maintenanceImage} 
+                  onChange={(e) => updatePageData('maintenanceImage', e.target.value)}
+                />
+                <div className="w-10 h-10 rounded border overflow-hidden flex-shrink-0">
+                  <img src={servicePageData.maintenanceImage} className="w-full h-full object-cover" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">维护事项列表</label>
+                <button onClick={addMaintenanceItem} className="text-xs text-brand-600 hover:text-brand-700 font-bold flex items-center gap-1">
+                  <Plus size={12} /> 添加事项
+                </button>
+              </div>
+              <div className="space-y-3">
+                {servicePageData.maintenanceItems.map((item, idx) => (
+                  <div key={item.id} className="flex gap-2 items-start">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-500 mt-2 flex-shrink-0">{idx + 1}</div>
+                    <textarea 
+                      className="flex-1 border rounded p-2 text-sm" 
+                      rows={2}
+                      value={item.text}
+                      onChange={(e) => updateMaintenanceItem(idx, e.target.value)}
+                    />
+                    <button onClick={() => removeMaintenanceItem(idx)} className="text-gray-400 hover:text-red-500 mt-2">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 };
 
 // Sub-component for editing a single Tab
 const TabEditor: React.FC<{ tab: ServiceTab; onUpdate: (t: ServiceTab) => void; onDelete: () => void }> = ({ tab, onUpdate, onDelete }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const handleAddItem = () => {
     const newItem = { title: '新项目', desc: '描述', url: '#', date: '', size: '', content: '' };

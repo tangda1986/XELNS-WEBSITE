@@ -4,6 +4,7 @@ import { useGlobalContext } from '../../context/GlobalContext';
 import { Solution } from '../../types';
 import { Edit, Trash2, Plus, X } from 'lucide-react';
 import RichTextEditor from '../../components/admin/RichTextEditor';
+import ImageInput from '../../components/admin/ImageInput';
 
 const ICON_OPTIONS = ['Box', 'Layers', 'Award', 'ScanBarcode', 'Settings', 'MonitorCheck', 'Headphones'];
 
@@ -29,7 +30,10 @@ const SolutionManager: React.FC = () => {
       title: '',
       desc: '',
       iconName: 'Box',
-      content: '<p>请输入解决方案详情...</p>'
+      content: '<p>请输入解决方案详情...</p>',
+      image: '',
+      pinned: false,
+      createdAt: Date.now()
     });
     setIsEditing(true);
   };
@@ -38,13 +42,13 @@ const SolutionManager: React.FC = () => {
     e.preventDefault();
     if (!currentSolution.id || !currentSolution.title) return;
 
-    const newSol = currentSolution as Solution;
+    const newSol = { pinned: false, createdAt: Date.now(), ...currentSolution } as Solution;
     const exists = solutions.find(s => s.id === newSol.id);
     
     if (exists) {
       setSolutions(solutions.map(s => s.id === newSol.id ? newSol : s));
     } else {
-      setSolutions([...solutions, newSol]);
+      setSolutions([newSol, ...solutions]);
     }
     setIsEditing(false);
   };
@@ -81,6 +85,14 @@ const SolutionManager: React.FC = () => {
           </div>
 
           <div>
+            <ImageInput 
+              label="方案主图 (列表页显示)"
+              value={currentSolution.image || ''}
+              onChange={(val) => setCurrentSolution({...currentSolution, image: val})}
+            />
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-1">简短描述</label>
             <textarea 
                className="w-full border rounded p-2" 
@@ -88,6 +100,17 @@ const SolutionManager: React.FC = () => {
                value={currentSolution.desc} 
                onChange={e => setCurrentSolution({...currentSolution, desc: e.target.value})}
             />
+          </div>
+
+          <div>
+            <label className="inline-flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={!!currentSolution.pinned}
+                onChange={e => setCurrentSolution({ ...currentSolution, pinned: e.target.checked })}
+              />
+              置顶
+            </label>
           </div>
 
           <RichTextEditor 
@@ -125,13 +148,16 @@ const SolutionManager: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {solutions.map(sol => (
+            {[...solutions]
+              .sort((a, b) => ((b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) || ((b.createdAt || 0) - (a.createdAt || 0)))
+              .map(sol => (
               <tr key={sol.id} className="hover:bg-gray-50">
                 <td className="p-4 font-medium">{sol.title}</td>
                 <td className="p-4 text-gray-500">{sol.iconName}</td>
                 <td className="p-4 text-sm text-gray-600 truncate max-w-xs">{sol.desc}</td>
                 <td className="p-4 text-right">
                   <div className="flex justify-end gap-2">
+                    <span className={`px-2 py-1 rounded text-xs ${sol.pinned ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-500'}`}>{sol.pinned ? '置顶' : '普通'}</span>
                     <button onClick={() => handleEdit(sol)} className="p-2 text-blue-600 hover:bg-blue-50 rounded"><Edit size={18} /></button>
                     <button onClick={() => handleDelete(sol.id)} className="p-2 text-red-600 hover:bg-red-50 rounded"><Trash2 size={18} /></button>
                   </div>

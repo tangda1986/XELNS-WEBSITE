@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Banner } from '../types';
 
@@ -29,14 +30,17 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({ banners }) => {
     setCurrentBannerIndex((prev) => (prev - 1 + validBanners.length) % validBanners.length);
   };
 
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
   if (validBanners.length === 0) return (
-    <div className="relative h-[200px] w-full bg-gray-900 flex items-center justify-center text-white">
+    <div className={`relative w-full ${isHome ? 'aspect-video' : 'h-[450px]'} bg-gray-900 flex items-center justify-center text-white`}>
       <p>暂无轮播图</p>
     </div>
   );
 
   return (
-    <div className="relative h-[400px] w-full overflow-hidden bg-gray-900">
+    <div className={`relative w-full ${isHome ? 'aspect-video' : 'h-[450px]'} overflow-hidden bg-gray-900`}>
         {validBanners.map((banner, index) => (
           <div
             key={banner.id}

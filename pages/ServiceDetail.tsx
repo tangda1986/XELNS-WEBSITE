@@ -33,6 +33,24 @@ const ServiceDetail: React.FC = () => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
 
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const w = el.getBoundingClientRect().width;
+    const targets = Array.from(el.querySelectorAll<HTMLElement>('img, table, figure, iframe, video, div, section'));
+    targets.forEach(t => {
+      const tw = t.getBoundingClientRect().width;
+      if (tw > w) {
+        t.style.maxWidth = '100%';
+        t.style.width = '100%';
+        if (t.tagName.toLowerCase() === 'img' || t.tagName.toLowerCase() === 'video' || t.tagName.toLowerCase() === 'iframe') {
+          (t as HTMLImageElement).style.height = 'auto';
+          (t as HTMLImageElement).style.display = 'block';
+        }
+      }
+    });
+  }, [activeTab?.content]);
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -156,7 +174,7 @@ const ServiceDetail: React.FC = () => {
 
             {/* Rich Text */}
             {activeTab.type === 'rich_text' && activeTab.content && (
-              <div className="prose prose-lg max-w-none text-gray-700">
+              <div ref={contentRef} className="prose prose-lg max-w-none text-gray-700 overflow-x-hidden break-words">
                 <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeTab.content, { ADD_ATTR: ['target'] }) }} />
               </div>
             )}

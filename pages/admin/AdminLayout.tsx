@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
 import { storage } from '../../lib/storage';
-import { LayoutDashboard, Package, Image, Building, LogOut, ArrowLeft, Home, Layers, Settings, Mail } from 'lucide-react';
+import { LayoutDashboard, Package, Image, Building, LogOut, ArrowLeft, Home, Layers, Settings, Mail, Briefcase } from 'lucide-react';
 import { useGlobalContext } from '../../context/GlobalContext';
 
 const AdminLayout: React.FC = () => {
@@ -25,9 +25,11 @@ const AdminLayout: React.FC = () => {
     { label: '首页管理', path: '/admin/home-manager', icon: Home },
     { label: '产品管理', path: '/admin/products', icon: Package },
     { label: '解决方案', path: '/admin/solutions', icon: Layers },
+    { label: '客户案例', path: '/admin/cases', icon: Briefcase },
     { label: '服务支持', path: '/admin/services', icon: Settings },
     { label: '留言信箱', path: '/admin/messages', icon: Mail },
     { label: '轮播图管理', path: '/admin/banners', icon: Image },
+    { label: '关于页面', path: '/admin/about', icon: Building },
     { label: '公司信息', path: '/admin/company', icon: Building },
     { label: '系统设置', path: '/admin/settings', icon: Settings },
   ];

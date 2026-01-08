@@ -28,6 +28,21 @@ export interface Solution {
   desc: string;
   iconName: string; // Changed from icon component to string for JSON storage
   content: string; // HTML detail content
+  image?: string; // Solution main image
+  pinned?: boolean;
+  createdAt?: number;
+}
+
+export interface CustomerCase {
+  id: string;
+  title: string;
+  desc: string;
+  image: string;
+  content: string; // HTML detail for case
+  buttonText?: string;
+  buttonUrl?: string;
+  pinned?: boolean;
+  createdAt?: number;
 }
 
 export interface Banner {
@@ -69,6 +84,38 @@ export interface HomePageData {
   heroImage: string;
   introTitle: string;
   introText: string;
+  factoryImage: string;
+}
+
+export interface AboutAdvantage {
+  title: string;
+  en: string;
+  desc: string;
+}
+
+export interface GalleryImage {
+  image: string;
+  title?: string;
+  subtitle?: string;
+}
+
+export interface CultureItem {
+  keyChar?: string; // e.g., '诚', '效', '专'
+  title: string;
+  desc: string;
+}
+
+export interface AboutPageData {
+  missionTitle: string;
+  missionSubtitle: string;
+  missionText: string;
+  profileImage: string;
+  stats: { value: string; label: string }[];
+  advantages: AboutAdvantage[];
+  galleryImages: GalleryImage[];
+  cultureTitle?: string;
+  cultureDescription?: string;
+  cultureItems?: CultureItem[];
 }
 
 export interface ContactMessage {
@@ -79,4 +126,24 @@ export interface ContactMessage {
   content: string;
   date: string;
   read: boolean;
+}
+
+export interface ServiceProcessStep {
+  step: number;
+  title: string;
+  desc: string;
+}
+
+export interface MaintenanceItem {
+  id: string;
+  text: string;
+}
+
+export interface ServicePageData {
+  processTitle: string;
+  processSteps: ServiceProcessStep[];
+  maintenanceTitle: string;
+  maintenanceItems: MaintenanceItem[];
+  maintenanceImage: string;
+  maintenanceImageTitle: string;
 }

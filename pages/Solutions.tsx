@@ -38,13 +38,12 @@ const Solutions: React.FC = () => {
         {/* Detailed Solutions */}
         <div className="space-y-16">
           
-          {solutions.map((solution, index) => {
+          {[...solutions]
+            .sort((a, b) => ((b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)) || ((b.createdAt || 0) - (a.createdAt || 0)))
+            .map((solution, index) => {
              const isEven = index % 2 === 0;
-             // Use placeholder images if dynamic images aren't stored in Solution type yet (assumed static map for demo or simple placeholder)
-             const imgUrl = solution.id === 'wms' ? 'https://picsum.photos/seed/wms_diagram/800/600' : 
-                            solution.id === 'anti-duplication' ? 'https://picsum.photos/seed/scanner_check/800/600' :
-                            solution.id === 'smt' ? 'https://picsum.photos/seed/smt_process/800/600' :
-                            `https://picsum.photos/seed/${solution.id}/800/600`;
+             // Use solution.image if available, otherwise fallback to placeholder based on ID
+             const imgUrl = solution.image || `https://picsum.photos/seed/${solution.id}/800/600`;
 
              const iconColorBg = isEven ? 'bg-blue-100' : 'bg-red-100';
              const iconColorText = isEven ? 'text-blue-600' : 'text-red-600';
@@ -76,7 +75,7 @@ const Solutions: React.FC = () => {
                  </div>
                </div>
              );
-          })}
+           })}
 
         </div>
       </div>

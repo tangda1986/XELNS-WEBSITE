@@ -16,14 +16,34 @@ const Footer: React.FC = () => {
           {/* Brand Column */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Hexagon className="text-brand-500" size={32} />
+              {companyInfo.logo ? (
+                <img src={companyInfo.logo} alt="Logo" className="h-8 w-8 object-contain rounded" />
+              ) : (
+                <Hexagon className="text-brand-500" size={32} />
+              )}
               <div>
-                <h3 className="text-2xl font-bold tracking-tight">XELNS</h3>
-                <p className="text-xs text-gray-400">鑫隆盛科技</p>
+                <h3 
+                  className="font-bold tracking-tight"
+                  style={{
+                    fontFamily: companyInfo.nameFontFamilyEn || undefined,
+                    fontSize: companyInfo.nameFontSizeEn ? `${companyInfo.nameFontSizeEn}px` : undefined
+                  }}
+                >
+                  {companyInfo.nameEn || 'XELNS'}
+                </h3>
+                <p 
+                  className="text-gray-400"
+                  style={{
+                    fontFamily: companyInfo.nameFontFamilyCn || undefined,
+                    fontSize: companyInfo.nameFontSizeCn ? `${companyInfo.nameFontSizeCn}px` : undefined
+                  }}
+                >
+                  {companyInfo.name || '鑫隆盛科技'}
+                </p>
               </div>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              专注于条码自动化识别技术的研究、开发和应用。为您提供合理的成本控制、最可靠的材料品质及最有效的专业服务。
+              {companyInfo.footerIntro || '专注于条码自动化识别技术的研究、开发和应用。为您提供合理的成本控制、最可靠的材料品质及最有效的专业服务。'}
             </p>
           </div>
 
@@ -67,7 +87,7 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} {companyInfo.name}. All rights reserved.
+            {companyInfo.copyright || `© ${new Date().getFullYear()} ${companyInfo.name}. All rights reserved.`}
           </p>
           <div className="flex gap-4">
              <Link to="/admin/login" className="text-gray-700 text-xs hover:text-gray-500">Admin Login</Link>

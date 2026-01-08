@@ -135,6 +135,14 @@ const HomeManager: React.FC = () => {
                   onChange={e => handleChange('introText', e.target.value)} 
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">工厂实力图</label>
+                <ImageInput 
+                   value={formData.factoryImage} 
+                   onChange={(val) => handleChange('factoryImage', val)} 
+                />
+                <p className="text-xs text-gray-500 mt-1">显示在"为何选择 XELNS"区域的左侧工厂图片</p>
+              </div>
             </div>
           </div>
 

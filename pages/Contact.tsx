@@ -162,7 +162,7 @@ const Contact: React.FC = () => {
 
         {/* Map Placeholder */}
         <div className="mt-16 bg-gray-200 w-full h-80 rounded-2xl flex items-center justify-center relative overflow-hidden">
-             <img src="https://picsum.photos/seed/map_tech/1200/400" className="absolute inset-0 w-full h-full object-cover opacity-50 grayscale" alt="Map BG" />
+             <img src={(companyInfo as any).mapImage || "https://picsum.photos/seed/map_tech/1200/400"} className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale hover:grayscale-0 transition-all duration-700" alt="Map BG" />
              <div className="relative z-10 bg-white p-6 rounded-lg shadow-xl text-center">
                 <MapPin size={32} className="text-brand-600 mx-auto mb-2" />
                 <p className="font-bold text-gray-900">公司位置示意图</p>

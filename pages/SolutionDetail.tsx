@@ -28,10 +28,28 @@ const SolutionDetail: React.FC = () => {
   }
 
   const Icon = getIcon(solution.iconName);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    const w = el.getBoundingClientRect().width;
+    const targets = Array.from(el.querySelectorAll<HTMLElement>('img, table, figure, iframe, video, div, section'));
+    targets.forEach(t => {
+      const tw = t.getBoundingClientRect().width;
+      if (tw > w) {
+        t.style.maxWidth = '100%';
+        t.style.width = '100%';
+        if (t.tagName.toLowerCase() === 'img' || t.tagName.toLowerCase() === 'video' || t.tagName.toLowerCase() === 'iframe') {
+          (t as HTMLImageElement).style.height = 'auto';
+          (t as HTMLImageElement).style.display = 'block';
+        }
+      }
+    });
+  }, [solution.content]);
 
   return (
     <div className="pt-24 pb-16 min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Navigation */}
         <div className="mb-8">
@@ -42,24 +60,24 @@ const SolutionDetail: React.FC = () => {
         </div>
 
         {/* Content Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-10">
+        <div className="bg-white rounded-2xl shadow-xl overflow-visible mb-10">
             {/* Header */}
             <div className="bg-brand-900 text-white p-8 md:p-12 relative overflow-hidden">
                 <div className="absolute right-0 top-0 opacity-10 transform translate-x-1/3 -translate-y-1/3">
                     <Icon size={300} strokeWidth={1} />
                 </div>
                 <div className="relative z-10">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-6">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items.center justify-center mb-6">
                         <Icon size={32} className="text-white" />
                     </div>
                     <h1 className="text-3xl md:text-4xl font-bold mb-4">{solution.title}</h1>
-                    <p className="text-brand-200 text-lg max-w-2xl">{solution.desc}</p>
+                    <p className="text-brand-200 text-lg max-w-4xl">{solution.desc}</p>
                 </div>
             </div>
 
             {/* Body */}
             <div className="p-8 md:p-12">
-                <div className="prose prose-lg max-w-none text-gray-700">
+                <div ref={contentRef} className="prose prose-lg max-w-none text-gray-700 overflow-x-hidden break-words">
                     <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(solution.content, { ADD_ATTR: ['target'] }) }} />
                 </div>
             </div>

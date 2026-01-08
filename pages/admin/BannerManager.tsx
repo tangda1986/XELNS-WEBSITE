@@ -90,6 +90,7 @@ const BannerManager: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         <BannerSection title="产品中心页 (顶部)" banners={context.productBanners} onSave={context.setProductBanners} />
         <BannerSection title="解决方案页" banners={context.solutionBanners} onSave={context.setSolutionBanners} />
+        <BannerSection title="客户案例页" banners={context.casesBanners} onSave={context.setCasesBanners} />
         <BannerSection title="关于我们页" banners={context.aboutBanners} onSave={context.setAboutBanners} />
         <BannerSection title="服务支持页" banners={context.serviceBanners} onSave={context.setServiceBanners} />
         <BannerSection title="联系我们页" banners={context.contactBanners} onSave={context.setContactBanners} />

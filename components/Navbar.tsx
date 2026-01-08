@@ -40,23 +40,35 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-14">
           
           {/* Logo Section */}
-          <div className="flex-shrink-0 flex items-center gap-3 group cursor-pointer">
-            {companyInfo.logo ? (
-               <img src={companyInfo.logo} alt="Logo" className="h-10 w-auto object-contain" />
-            ) : (
-              <div className={`p-2 rounded-xl transition-all duration-500 ${isTransparent ? 'bg-white/10 text-white backdrop-blur-sm' : 'bg-brand-600 text-white'}`}>
-                  <Hexagon size={24} strokeWidth={2.5} />
-              </div>
-            )}
-            <div className="flex flex-col">
-              <span className={`font-bold text-xl tracking-tighter leading-none transition-colors duration-300 ${isTransparent ? 'text-white' : 'text-slate-900'}`}>
+            <div className="flex-shrink-0 flex items-center gap-3 group cursor-pointer">
+              {companyInfo.logo ? (
+                 <img src={companyInfo.logo} alt="Logo" className="h-10 w-auto object-contain" />
+              ) : (
+                <div className={`p-2 rounded-xl transition-all duration-500 ${isTransparent ? 'bg-transparent text-white' : 'bg-transparent text-brand-600'}`}>
+                    <Hexagon size={24} strokeWidth={2.5} />
+                </div>
+              )}
+              <div className="flex flex-col">
+              <span 
+                className={`font-bold tracking-tighter leading-none transition-colors duration-300 ${isTransparent ? 'text-white' : 'text-slate-900'}`}
+                style={{
+                  fontFamily: companyInfo.nameFontFamilyEn || undefined,
+                  fontSize: companyInfo.nameFontSizeEn ? `${companyInfo.nameFontSizeEn}px` : undefined
+                }}
+              >
                 {companyInfo.nameEn || 'XELNS'}
               </span>
-              <span className={`text-[10px] tracking-[0.2em] font-medium transition-colors duration-300 ${isTransparent ? 'text-white/60' : 'text-slate-500'}`}>
-                {companyInfo.name.includes("鑫隆盛") ? "鑫隆盛科技" : companyInfo.name}
+              <span 
+                className={`tracking-[0.2em] font-medium transition-colors duration-300 ${isTransparent ? 'text-white/60' : 'text-slate-500'}`}
+                style={{
+                  fontFamily: companyInfo.nameFontFamilyCn || undefined,
+                  fontSize: companyInfo.nameFontSizeCn ? `${companyInfo.nameFontSizeCn}px` : undefined
+                }}
+              >
+                {companyInfo.name || '鑫隆盛科技'}
               </span>
+              </div>
             </div>
-          </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-1">
@@ -65,7 +77,7 @@ const Navbar: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 relative overflow-hidden group ${
+                  `px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-300 relative overflow-hidden group ${
                     isActive 
                       ? (isTransparent ? 'bg-white text-brand-900' : 'bg-brand-50 text-brand-600')
                       : (isTransparent ? 'text-white hover:bg-white/10' : 'text-slate-600 hover:text-brand-600 hover:bg-slate-50')
@@ -87,9 +99,9 @@ const Navbar: React.FC = () => {
                <Search size={20} />
             </button>
             <div className={`h-6 w-px ${isTransparent ? 'bg-white/20' : 'bg-slate-200'}`}></div>
-            <a href={`tel:${companyInfo.tel}`} className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all shadow-lg transform hover:-translate-y-0.5 ${isTransparent ? 'bg-white text-brand-900 hover:bg-gray-100' : 'bg-brand-600 text-white hover:bg-brand-700'}`}>
+            <a href={`tel:${companyInfo.tel}`} className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-base transition-all shadow-lg transform hover:-translate-y-0.5 ${isTransparent ? 'bg-white text-brand-900 hover:bg-gray-100' : 'bg-brand-600 text-white hover:bg-brand-700'}`}>
               <Phone size={16} />
-              <span>联系我们</span>
+              <span>{companyInfo.mobile}</span>
             </a>
           </div>
 

@@ -1,34 +1,30 @@
 
 import React from 'react';
-import { ABOUT_BANNERS } from '../constants';
 import BannerCarousel from '../components/BannerCarousel';
 import { Target, Users, Award, Factory, Globe } from 'lucide-react';
 import { useGlobalContext } from '../context/GlobalContext';
 import DOMPurify from 'dompurify';
 
 const About: React.FC = () => {
-  const { companyInfo } = useGlobalContext();
+    const { companyInfo, aboutData, aboutBanners } = useGlobalContext();
 
   return (
     <div className="pt-0 pb-0 min-h-screen bg-white">
 
       {/* Banner */}
-      <BannerCarousel banners={ABOUT_BANNERS} />
+      <BannerCarousel banners={aboutBanners} />
 
-      {/* Mission Statement */}
+      {/* Mission Statement (driven by admin aboutData) */}
       <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
             <span className="text-brand-600 font-bold tracking-widest uppercase text-sm mb-4 block">Our Mission</span>
             <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-8 leading-tight">
-                致力于条码自动识别技术<br/>
+                {aboutData?.missionTitle}
+                <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-brand-400">
-                    为企业数字化转型赋能
+                    {aboutData?.missionSubtitle}
                 </span>
             </h2>
-            <p className="text-xl text-gray-500 leading-relaxed font-light">
-                鑫隆盛科技不仅仅是设备供应商，更是您值得信赖的条码自动化解决方案合作伙伴。
-                我们以技术为核心，以服务为基石，助力企业实现高效、精准的智能化管理。
-            </p>
         </div>
       </section>
 
@@ -59,24 +55,34 @@ const About: React.FC = () => {
                     <h3 className="text-3xl font-bold text-gray-900 mb-6">关于鑫隆盛</h3>
                     <div className="w-20 h-1.5 bg-brand-600 mb-8"></div>
                     
-                    {/* Dynamic Content */}
+                    {/* Dynamic Content driven by aboutData */}
                     <div className="prose prose-lg text-gray-600 leading-relaxed max-w-none">
-                        {companyInfo.aboutContent ? (
-                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(companyInfo.aboutContent, { ADD_ATTR: ['target'] }) }} />
+                        {aboutData ? (
+                            <div>
+                              <h4 className="font-bold text-xl">{aboutData.missionTitle}</h4>
+                              <p className="text-lg text-gray-700 mb-4">{aboutData.missionSubtitle}</p>
+                              {(() => {
+                                const text = aboutData.missionText || '';
+                                const hasHtml = /<[^>]+>/.test(text);
+                                return hasHtml ? (
+                                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(text, { ADD_ATTR: ['target'] }) }} />
+                                ) : (
+                                  <p className="text-gray-600">{text}</p>
+                                );
+                              })()}
+                            </div>
                         ) : (
                             <p>惠州市鑫隆盛科技有限公司是一家专业致力于条码自动识别技术研究、开发和应用的高科技企业。</p>
                         )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-6 mt-10">
-                        <div className="border-l-4 border-brand-500 pl-4">
-                            <h4 className="font-bold text-gray-900 text-xl">15+ 年</h4>
-                            <p className="text-gray-500 text-sm">行业深耕经验</p>
-                        </div>
-                        <div className="border-l-4 border-brand-500 pl-4">
-                            <h4 className="font-bold text-gray-900 text-xl">500+ 家</h4>
-                            <p className="text-gray-500 text-sm">服务企业客户</p>
-                        </div>
+                        {(aboutData?.stats || []).map((s, idx) => (
+                          <div key={idx} className="border-l-4 border-brand-500 pl-4">
+                            <h4 className="font-bold text-gray-900 text-xl">{s.value}</h4>
+                            <p className="text-gray-500 text-sm">{s.label}</p>
+                          </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -92,37 +98,15 @@ const About: React.FC = () => {
                     我们承诺为您提供最具竞争力的产品与服务，成就您的商业价值。
                 </p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                    {
-                        icon: Target,
-                        title: "合理的成本控制",
-                        en: "Cost Control",
-                        desc: "通过自有工厂生产与一级代理渠道优势，为您节省每一分预算，提供高性价比的解决方案。"
-                    },
-                    {
-                        icon: Award,
-                        title: "可靠的材料品质",
-                        en: "Quality Assurance",
-                        desc: "严选原材料，采用先进生产工艺。无论是标签还是碳带，均经过严格质检，确保打印效果清晰耐久。"
-                    },
-                    {
-                        icon: Users,
-                        title: "专业的服务团队",
-                        en: "Professional Team",
-                        desc: "从售前咨询、方案设计到售后维护，专属客服与技术工程师团队全天候为您保驾护航。"
-                    }
-                ].map((item, idx) => (
+                {(aboutData?.advantages || []).map((item: any, idx: number) => (
                     <div key={idx} className="group bg-white p-8 rounded-2xl border border-gray-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
                         <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 mb-6 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-                            <item.icon size={32} strokeWidth={1.5} />
+                            <Target size={32} strokeWidth={1.5} />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
                         <p className="text-xs font-bold text-brand-400 uppercase tracking-wider mb-4">{item.en}</p>
-                        <p className="text-gray-600 leading-relaxed">
-                            {item.desc}
-                        </p>
+                        <p className="text-gray-600 leading-relaxed">{item.desc}</p>
                     </div>
                 ))}
             </div>
@@ -197,30 +181,17 @@ const About: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="relative group overflow-hidden rounded-xl h-64">
-                    <img src="https://picsum.photos/seed/factory_1/600/800" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Production Line" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-                        <span className="text-white font-bold">自动化生产线</span>
-                    </div>
-                </div>
-                <div className="relative group overflow-hidden rounded-xl h-64 md:mt-12">
-                     <img src="https://picsum.photos/seed/factory_2/600/800" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Quality Control" />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-                        <span className="text-white font-bold">精密质检</span>
-                    </div>
-                </div>
-                <div className="relative group overflow-hidden rounded-xl h-64">
-                     <img src="https://picsum.photos/seed/factory_3/600/800" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Stock" />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-                        <span className="text-white font-bold">充足库存</span>
-                    </div>
-                </div>
-                <div className="relative group overflow-hidden rounded-xl h-64 md:mt-12">
-                     <img src="https://picsum.photos/seed/factory_4/600/800" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="R&D" />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
-                        <span className="text-white font-bold">技术研发</span>
-                    </div>
-                </div>
+                {(aboutData?.galleryImages || []).map((g: any, idx: number) => (
+                  <div key={idx} className="relative group overflow-hidden rounded-xl h-64">
+                      <img src={g.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={`Gallery ${idx}`} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-6">
+                          <div className="text-white">
+                              {g.title && <div className="font-bold">{g.title}</div>}
+                              {g.subtitle && <div className="text-sm opacity-90">{g.subtitle}</div>}
+                          </div>
+                      </div>
+                  </div>
+                ))}
             </div>
           </div>
       </section>

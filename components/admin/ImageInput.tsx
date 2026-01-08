@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Link as LinkIcon, X, Sparkles, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { AI_CONFIG } from '../../constants';
 
 interface ImageInputProps {
   value: string;
@@ -98,8 +99,17 @@ const ImageInput: React.FC<ImageInputProps> = ({ value, onChange, label }) => {
     
     setIsGenerating(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      
+      // Read API key from Vite env: VITE_GOOGLE_API_KEY
+      // NOTE: For security, prefer calling AI APIs from a server-side endpoint.
+      const apiKey = (import.meta as any).env?.VITE_GOOGLE_API_KEY || '';
+      if (!apiKey) {
+        alert('未配置 AI API Key，请在 .env 中设置 VITE_GOOGLE_API_KEY');
+        setIsGenerating(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+
       // Using gemini-2.5-flash-image via generateContent
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
@@ -133,13 +143,21 @@ const ImageInput: React.FC<ImageInputProps> = ({ value, onChange, label }) => {
 
     } catch (error: any) {
       console.error("Image generation error:", error);
-      let msg = 'AI生成服务暂时不可用。';
-      if (error.status === 404 || error.code === 404) {
-         msg = '模型未找到或暂不可用 (404)。请稍后重试。';
-      } else if (error.message) {
-         msg = `生成失败: ${error.message}`;
+      // Normalize error message
+      const errMsg = error?.message || error?.error?.message || (error?.toString && error.toString()) || JSON.stringify(error || {});
+
+      // Detect quota / rate-limit errors and give actionable guidance
+      const isQuotaError = error?.status === 429 || error?.code === 429 || /quota/i.test(errMsg) || /GenerateRequestsPerDayPerProjectPerModel-FreeTier/.test(errMsg) || /generate_content_free_tier_requests/.test(errMsg);
+
+      if (isQuotaError) {
+        alert('生成失败：已超过当前配额或免费额度。\n请检查你的项目配额与计费设置，或登录 Google Cloud/AI 控制台升级配额。\n详情: https://ai.dev/usage?tab=rate-limit');
+      } else if (/not authorized|permission/i.test(errMsg)) {
+        alert('生成失败：未授权或 API Key 无效，请检查你的 API Key 和权限设置。');
+      } else if (/model not found|404/i.test(errMsg)) {
+        alert('生成失败：所请求的模型不可用（404）。请确认模型名称或稍后重试。');
+      } else {
+        alert(`生成失败：${errMsg}`);
       }
-      alert(msg);
     } finally {
       setIsGenerating(false);
     }
@@ -242,13 +260,13 @@ const ImageInput: React.FC<ImageInputProps> = ({ value, onChange, label }) => {
               {isGenerating ? <><Loader2 size={16} className="animate-spin" /> 生成中...</> : <><Sparkles size={16} /> 开始生成</>}
             </button>
           </div>
-          <p className="text-[10px] text-purple-600/70 text-right">Powered by Gemini 2.5 Flash Image</p>
+          <p className="text-[10px] text-purple-600/70 text-right">{AI_CONFIG.attribution}</p>
         </div>
       )}
 
       {value && (
-        <div className="relative mt-3 w-full h-48 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group">
-           <img src={value} alt="Preview" className="w-full h-full object-contain" />
+        <div className="relative mt-3 w-full aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200 group flex items-center justify-center">
+           <img src={value} alt="Preview" className="max-w-full max-h-full object-contain" />
            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button 
                     type="button"

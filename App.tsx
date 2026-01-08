@@ -19,6 +19,7 @@ import Contact from './pages/Contact';
 import Service from './pages/Service';
 import ServiceDetail from './pages/ServiceDetail';
 import About from './pages/About';
+import Cases from './pages/Cases';
 import NotFound from './pages/NotFound';
 
 // Admin Pages
@@ -30,9 +31,11 @@ import BannerManager from './pages/admin/BannerManager';
 import CompanyManager from './pages/admin/CompanyManager';
 import HomeManager from './pages/admin/HomeManager';
 import SolutionManager from './pages/admin/SolutionManager';
+import CaseManager from './pages/admin/CaseManager';
 import ServiceManager from './pages/admin/ServiceManager';
 import MessageInbox from './pages/admin/MessageInbox';
 import Settings from './pages/admin/Settings';
+import AboutManager from './pages/admin/AboutManager';
 
 // Scroll to top helper
 const ScrollToTop = () => {
@@ -71,9 +74,11 @@ const App: React.FC = () => {
             <Route path="home-manager" element={<HomeManager />} />
             <Route path="products" element={<ProductManager />} />
             <Route path="solutions" element={<SolutionManager />} />
+            <Route path="cases" element={<CaseManager />} />
             <Route path="services" element={<ServiceManager />} />
             <Route path="messages" element={<MessageInbox />} />
             <Route path="banners" element={<BannerManager />} />
+            <Route path="about" element={<AboutManager />} />
             <Route path="company" element={<CompanyManager />} />
             <Route path="settings" element={<Settings />} />
           </Route>
@@ -84,6 +89,7 @@ const App: React.FC = () => {
           <Route path="/products/:id" element={<LayoutWithNav><ProductDetail /></LayoutWithNav>} />
           <Route path="/solutions" element={<LayoutWithNav><Solutions /></LayoutWithNav>} />
           <Route path="/solutions/:id" element={<LayoutWithNav><SolutionDetail /></LayoutWithNav>} />
+          <Route path="/cases" element={<LayoutWithNav><Cases /></LayoutWithNav>} />
           <Route path="/service" element={<LayoutWithNav><Service /></LayoutWithNav>} />
           <Route path="/service/:id" element={<LayoutWithNav><ServiceDetail /></LayoutWithNav>} />
           <Route path="/about" element={<LayoutWithNav><About /></LayoutWithNav>} />
