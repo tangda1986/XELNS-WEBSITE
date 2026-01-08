@@ -5,10 +5,14 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:static": "node scripts/generate-static.mjs",
+    "admin:api": "node scripts/admin-api.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.32.0",
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/postgres": "^0.10.0",
     "dompurify": "^3.0.8",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.344.0",

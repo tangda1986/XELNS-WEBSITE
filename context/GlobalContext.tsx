@@ -60,6 +60,11 @@ interface GlobalContextType {
   setIsSearchOpen: (isOpen: boolean) => void;
 
   refreshData: () => void;
+  
+  isCloudSyncing: boolean;
+  syncFromCloud: () => Promise<void>;
+  syncToCloud: () => Promise<boolean>;
+  initCloudDb: () => Promise<boolean>;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -83,6 +88,70 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [messages, setMessagesState] = useState<ContactMessage[]>([]);
   const [toast, setToast] = useState<ToastState>({ visible: false, message: '' });
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [hasSynced, setHasSynced] = useState(false);
+
+  // Cloud Sync Logic
+  const syncFromCloud = async () => {
+    if (isCloudSyncing) return;
+    setIsCloudSyncing(true);
+    try {
+      const { cloudStorage } = await import('../lib/cloudStorage');
+      const data = await cloudStorage.fetchAll();
+      if (data && Object.keys(data).length > 0) {
+        // Map cloud keys (which might be simple keys) to storage keys if needed, 
+        // or assume cloud stores the same structure as getStateSnapshot
+        // The api/store.js returns { key: value }, where key is from storage keys (e.g. 'products')
+        // storage.importStateSnapshot expects an object where keys are like 'products', 'productBanners'
+        // The snapshot from storage.getStateSnapshot() has keys: products, productBanners...
+        // Let's verify what we save. We save snapshot.
+        
+        // However, our API saves { products: ..., productBanners: ... } 
+        // The api implementation iterates keys and saves them.
+        // So fetching returns { products: ..., ... }
+        
+        const success = storage.importStateSnapshot(data);
+        if (success) {
+          refreshData();
+          console.log('Synced from cloud successfully');
+        }
+      }
+    } catch (e) {
+      console.error('Auto sync failed', e);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  const syncToCloud = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const { cloudStorage } = await import('../lib/cloudStorage');
+      const snapshot = storage.getStateSnapshot();
+      const success = await cloudStorage.saveAll(snapshot);
+      if (success) {
+        showToast('已成功同步到云端数据库');
+        return true;
+      } else {
+        showToast('同步失败，请检查网络或配置');
+        return false;
+      }
+    } catch (e) {
+      console.error(e);
+      return false;
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  const initCloudDb = async () => {
+    try {
+      const { cloudStorage } = await import('../lib/cloudStorage');
+      return await cloudStorage.initDb();
+    } catch {
+      return false;
+    }
+  };
 
   const refreshData = () => {
     setProductsState(storage.getProducts());
@@ -107,6 +176,12 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   useEffect(() => {
     refreshData();
+    // Try to sync from cloud on init if authenticated or just generally to keep fresh
+    // But maybe only if we have network.
+    // Let's do it silently.
+    if (storage.isAuthenticated()) {
+       syncFromCloud();
+    }
   }, []);
 
   const showToast = (message: string) => {
@@ -178,7 +253,8 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       messages, addMessage, deleteMessage, markMessageRead,
       toast, showToast,
       isSearchOpen, setIsSearchOpen,
-      refreshData
+      refreshData,
+      isCloudSyncing, syncFromCloud, syncToCloud, initCloudDb
     }}>
       {children}
     </GlobalContext.Provider>

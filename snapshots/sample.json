@@ -1,0 +1,22 @@
+{
+  "companyInfo": {
+    "name": "静态站点生成示例",
+    "nameEn": "Static Site Example",
+    "address": "示例地址",
+    "tel": "000-0000-0000",
+    "mobile": "000-0000-0000",
+    "email": "example@example.com",
+    "website": "example.com",
+    "qq": ["000000", "111111"],
+    "wechatQr": "",
+    "logo": "",
+    "mapImage": "",
+    "footerIntro": "这是一个静态站点生成的演示。",
+    "copyright": "© 2026 示例公司",
+    "nameFontFamilyEn": "",
+    "nameFontSizeEn": 0,
+    "nameFontFamilyCn": "",
+    "nameFontSizeCn": 0,
+    "aboutContent": ""
+  }
+}

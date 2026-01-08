@@ -5,12 +5,30 @@ import { useGlobalContext } from '../../context/GlobalContext';
 import { Lock, Save, Database, UploadCloud, RotateCcw } from 'lucide-react';
 
 const Settings: React.FC = () => {
-  const { showToast } = useGlobalContext();
+  const { showToast, initCloudDb, syncFromCloud, syncToCloud, isCloudSyncing } = useGlobalContext();
   const [importing, setImporting] = useState(false);
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [generating, setGenerating] = useState(false);
+
+  const handleInitDb = async () => {
+    if (!confirm('确定要初始化云端数据库表吗？如果表已存在不会影响数据。')) return;
+    const ok = await initCloudDb();
+    if (ok) showToast('数据库初始化成功');
+    else showToast('数据库初始化失败，请检查配置');
+  };
+
+  const handleSyncToCloud = async () => {
+    if (!confirm('确定要将本地数据覆盖到云端吗？')) return;
+    await syncToCloud();
+  };
+
+  const handleSyncFromCloud = async () => {
+    if (!confirm('确定要从云端拉取数据覆盖本地吗？')) return;
+    await syncFromCloud();
+  };
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +101,31 @@ const Settings: React.FC = () => {
     window.location.reload();
   };
 
+  const handleGenerateStatic = async () => {
+    try {
+      setGenerating(true);
+      const snapshot = storage.getStateSnapshot();
+      const res = await fetch('http://localhost:8787/generate-static', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(snapshot)
+      });
+      if (!res.ok) {
+        throw new Error('failed');
+      }
+      const data = await res.json();
+      if (data && data.outDir) {
+        showToast(`静态站点已生成：${data.outDir}`);
+      } else {
+        showToast('生成完成');
+      }
+    } catch {
+      alert('生成失败：请先在终端运行 npm run admin:api');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">系统设置</h1>
@@ -153,6 +196,53 @@ const Settings: React.FC = () => {
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-3">提示：所有内容（导航、页面数据、轮播、案例、服务详情等）均包含在导出文件中。</p>
+      </div>
+
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mt-8 max-w-2xl">
+        <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+           <UploadCloud size={20} className="text-brand-600" />
+           生成静态站点
+        </h3>
+        <div className="flex gap-4 items-center">
+          <button
+            onClick={handleGenerateStatic}
+            disabled={generating}
+            className={`px-4 py-2 ${generating ? 'bg-gray-300 text-gray-600' : 'bg-brand-600 text-white'} rounded font-bold hover:bg-brand-700 flex items-center gap-2`}
+          >
+            <UploadCloud size={18} /> {generating ? '生成中...' : '生成静态站点'}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-3">需要本地API已启动：npm run admin:api。</p>
+      </div>
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mt-8 max-w-2xl">
+        <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+           <Database size={20} className="text-brand-600" />
+           云端数据库同步 (Vercel Postgres)
+        </h3>
+        <div className="flex flex-wrap gap-4 items-center">
+          <button 
+            onClick={handleSyncToCloud} 
+            disabled={isCloudSyncing}
+            className="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50"
+          >
+            {isCloudSyncing ? '同步中...' : '推送本地数据到云端'}
+          </button>
+          <button 
+            onClick={handleSyncFromCloud} 
+            disabled={isCloudSyncing}
+            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded font-bold hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+          >
+            从云端拉取覆盖本地
+          </button>
+          <button 
+            onClick={handleInitDb} 
+            disabled={isCloudSyncing}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-brand-600 underline"
+          >
+            初始化数据库表
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-3">配置已保存到 .env，请确保 Vercel 环境变量已正确设置。</p>
       </div>
     </div>
   );
