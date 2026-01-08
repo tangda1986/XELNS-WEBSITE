@@ -113,8 +113,10 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         const success = storage.importStateSnapshot(data);
         if (success) {
           refreshData();
-          console.log('Synced from cloud successfully');
+          showToast('已从云端拉取最新数据');
         }
+      } else {
+        showToast('云端暂无数据或拉取失败');
       }
     } catch (e) {
       console.error('Auto sync failed', e);
@@ -176,12 +178,6 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   useEffect(() => {
     refreshData();
-    // Try to sync from cloud on init if authenticated or just generally to keep fresh
-    // But maybe only if we have network.
-    // Let's do it silently.
-    if (storage.isAuthenticated()) {
-       syncFromCloud();
-    }
   }, []);
 
   const showToast = (message: string) => {

@@ -10,6 +10,7 @@ export default async function handler(request, response) {
       });
       return response.status(200).json(data);
     } catch (error) {
+      console.error('API Store Error:', error);
       // Table might not exist yet
       if (error.message.includes('relation "site_data" does not exist')) {
         return response.status(200).json({});
@@ -36,6 +37,7 @@ export default async function handler(request, response) {
       
       return response.status(200).json({ success: true });
     } catch (error) {
+      console.error('API Store POST Error:', error);
       return response.status(500).json({ error: error.message });
     }
   }

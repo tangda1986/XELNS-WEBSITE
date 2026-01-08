@@ -1,7 +1,7 @@
 import http from 'http'
 import { promises as fs } from 'fs'
 import path from 'path'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import { spawn } from 'child_process'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -9,6 +9,31 @@ const __dirname = path.dirname(__filename)
 const projectRoot = path.resolve(__dirname, '..')
 const snapshotsDir = path.join(projectRoot, 'snapshots')
 const PORT = process.env.ADMIN_API_PORT ? Number(process.env.ADMIN_API_PORT) : 8787
+
+// Load .env manually
+async function loadEnv() {
+  const envPath = path.join(projectRoot, '.env')
+  try {
+    const envContent = await fs.readFile(envPath, 'utf-8')
+    envContent.split('\n').forEach(line => {
+      const match = line.match(/^\s*([\w]+)\s*=\s*(.*)?\s*$/)
+      if (match) {
+        const key = match[1]
+        let value = match[2] || ''
+        // Remove quotes if present
+        if (value.length >= 2 && ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")))) {
+          value = value.slice(1, -1)
+        }
+        process.env[key] = process.env[key] || value
+      }
+    })
+    console.log('Loaded .env configuration')
+  } catch (e) {
+    console.log('No .env file found or failed to load')
+  }
+}
+
+await loadEnv()
 
 async function ensureDir(p) {
   await fs.mkdir(p, { recursive: true })
@@ -60,40 +85,85 @@ function send(res, code, body, headers = {}) {
   res.end(JSON.stringify(body))
 }
 
+async function invokeHandler(relPath, req, res) {
+  try {
+    // Dynamic import the handler
+    // Use pathToFileURL for Windows compatibility
+    const mod = await import(pathToFileURL(path.join(projectRoot, relPath)).href)
+    const handler = mod.default
+    
+    // Mock Vercel/Express response methods
+    res.status = (code) => {
+      res.statusCode = code
+      return res
+    }
+    res.json = (data) => {
+      send(res, res.statusCode || 200, data)
+      return res
+    }
+    
+    await handler(req, res)
+  } catch (e) {
+    console.error(`Error invoking ${relPath}:`, e)
+    send(res, 500, { error: e.message })
+  }
+}
+
 const server = http.createServer(async (req, res) => {
+  // CORS
   if (req.method === 'OPTIONS') {
     send(res, 200, { ok: true })
     return
   }
-  if (req.method === 'GET' && req.url === '/health') {
-    send(res, 200, { ok: true })
-    return
-  }
-  if (req.method === 'POST' && req.url === '/generate-static') {
+
+  // Parse Body for all requests
+  let bodyStr = ''
+  req.on('data', chunk => { bodyStr += chunk })
+  req.on('end', async () => {
     try {
-      let body = ''
-      req.on('data', chunk => {
-        body += chunk
-      })
-      req.on('end', async () => {
-        try {
-          const obj = JSON.parse(body || '{}')
-          const p = await writeSnapshot(obj)
-          const outDir = await runGenerate(p)
-          send(res, 200, { ok: true, outDir })
-        } catch (e) {
-          send(res, 500, { ok: false, error: String(e && e.message || e) })
-        }
-      })
+      if (bodyStr) {
+        req.body = JSON.parse(bodyStr)
+      } else {
+        req.body = {}
+      }
     } catch {
-      send(res, 500, { ok: false })
+      req.body = {}
     }
-    return
-  }
-  send(res, 404, { ok: false, error: 'not_found' })
+
+    console.log(`${req.method} ${req.url}`)
+
+    if (req.method === 'GET' && req.url === '/health') {
+      send(res, 200, { ok: true })
+      return
+    }
+
+    if (req.method === 'POST' && req.url === '/generate-static') {
+      try {
+        const obj = req.body
+        const p = await writeSnapshot(obj)
+        const outDir = await runGenerate(p)
+        send(res, 200, { ok: true, outDir })
+      } catch (e) {
+        send(res, 500, { ok: false, error: String(e && e.message || e) })
+      }
+      return
+    }
+
+    // Proxy API requests
+    if (req.url.startsWith('/api/store')) {
+      await invokeHandler('api/store.js', req, res)
+      return
+    }
+
+    if (req.url.startsWith('/api/init-db')) {
+      await invokeHandler('api/init-db.js', req, res)
+      return
+    }
+
+    send(res, 404, { ok: false, error: 'not_found' })
+  })
 })
 
 server.listen(PORT, () => {
   process.stdout.write(`admin api listening on http://localhost:${PORT}\n`)
 })
-
