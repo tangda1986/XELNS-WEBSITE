@@ -21,17 +21,25 @@ export default async function handler(request, response) {
 
   if (request.method === 'POST') {
     try {
-      const data = request.body;
+      const data = request.body && typeof request.body === 'object' ? request.body : {};
       const keys = Object.keys(data);
+
+      await sql`
+        CREATE TABLE IF NOT EXISTS site_data (
+          key TEXT PRIMARY KEY,
+          value JSONB,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `;
       
-      // Use a transaction or batch insert could be better, but simple loop is fine for low volume
       for (const key of keys) {
         const value = data[key];
+        const valueJson = JSON.stringify(value);
         await sql`
           INSERT INTO site_data (key, value, updated_at)
-          VALUES (${key}, ${value}, CURRENT_TIMESTAMP)
+          VALUES (${key}, ${valueJson}::jsonb, CURRENT_TIMESTAMP)
           ON CONFLICT (key) 
-          DO UPDATE SET value = ${value}, updated_at = CURRENT_TIMESTAMP;
+          DO UPDATE SET value = ${valueJson}::jsonb, updated_at = CURRENT_TIMESTAMP;
         `;
       }
       
