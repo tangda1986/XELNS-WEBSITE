@@ -53,7 +53,7 @@ const Settings: React.FC = () => {
 
     storage.saveAdminPassword(newPassword);
     await syncToCloud();
-    showToast('密码修改成功！已同步到云端。');
+    showToast('密码修改成功！下次登录请使用新密码。');
     setOldPassword('');
     setNewPassword('');
     setConfirmPassword('');

@@ -92,6 +92,9 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [hasSynced, setHasSynced] = useState(false);
   const cloudAutoSaveTimeoutRef = useRef<number | null>(null);
   const cloudAutoSaveInFlightRef = useRef(false);
+  const cloudAutoSaveRetryTimeoutRef = useRef<number | null>(null);
+  const cloudAutoSaveRetryCountRef = useRef(0);
+  const cloudAutoSaveLastErrorAtRef = useRef<number>(0);
   const cloudSyncInFlightRef = useRef(false);
 
   const showToast = (message: string) => {
@@ -130,7 +133,28 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       cloudAutoSaveInFlightRef.current = true;
       try {
         const { cloudStorage } = await import('../lib/cloudStorage');
-        await cloudStorage.saveAll(storage.getStateSnapshot());
+        const ok = await cloudStorage.saveAll(storage.getStateSnapshot());
+        if (ok) {
+          cloudAutoSaveRetryCountRef.current = 0;
+          if (cloudAutoSaveRetryTimeoutRef.current !== null) {
+            window.clearTimeout(cloudAutoSaveRetryTimeoutRef.current);
+            cloudAutoSaveRetryTimeoutRef.current = null;
+          }
+        } else {
+          cloudAutoSaveRetryCountRef.current = Math.min(cloudAutoSaveRetryCountRef.current + 1, 6);
+          const now = Date.now();
+          if (now - cloudAutoSaveLastErrorAtRef.current > 8000) {
+            cloudAutoSaveLastErrorAtRef.current = now;
+            showToast('云端自动同步失败，请检查网络/接口部署');
+          }
+          const delay = 1000 * Math.min(30, 2 ** cloudAutoSaveRetryCountRef.current);
+          if (cloudAutoSaveRetryTimeoutRef.current !== null) {
+            window.clearTimeout(cloudAutoSaveRetryTimeoutRef.current);
+          }
+          cloudAutoSaveRetryTimeoutRef.current = window.setTimeout(() => {
+            requestCloudAutoSave();
+          }, delay);
+        }
       } finally {
         cloudAutoSaveInFlightRef.current = false;
       }
