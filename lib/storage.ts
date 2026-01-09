@@ -128,7 +128,7 @@ export const storage = {
   // Admin Password
   getAdminPassword: () => {
     const pwd = localStorage.getItem(STORAGE_KEYS.ADMIN_PWD);
-    return pwd ? JSON.parse(pwd) : 'admin123';
+    return pwd ? JSON.parse(pwd) : 'yangcan880214@YC';
   },
   saveAdminPassword: (password: string) => set(STORAGE_KEYS.ADMIN_PWD, password)
   
