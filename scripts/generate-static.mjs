@@ -12,7 +12,7 @@ const DIST_DIR = process.env.STATIC_DIST_DIR || path.join(projectRoot, 'dist');
 const SNAPSHOT_DIR = process.env.STATIC_SNAPSHOT_DIR || path.join(projectRoot, 'snapshots');
 const SNAPSHOT_PATH_ARG = process.argv[2] || process.env.STATIC_SNAPSHOT_JSON || '';
 
-const keyMap = {
+const publishKeyMap = {
   products: 'xelns_ultra_products',
   productBanners: 'xelns_ultra_banners_product',
   solutionBanners: 'xelns_ultra_banners_solution',
@@ -27,10 +27,7 @@ const keyMap = {
   homePageData: 'xelns_ultra_home_data',
   aboutData: 'xelns_ultra_about_data',
   servicePageData: 'xelns_ultra_service_page_data',
-  customerCases: 'xelns_ultra_customer_cases',
-  messages: 'xelns_ultra_messages',
-  adminPassword: 'xelns_ultra_admin_pwd',
-  adminSession: 'xelns_ultra_admin_session'
+  customerCases: 'xelns_ultra_customer_cases'
 };
 
 async function ensureDir(p) {
@@ -82,8 +79,18 @@ async function readSnapshot(p) {
 
 function makeInjectionScript(snapshot) {
   const sText = JSON.stringify(snapshot);
-  const mapText = JSON.stringify(keyMap);
+  const mapText = JSON.stringify(publishKeyMap);
   return `(function(){try{var s=${sText};var m=${mapText};Object.keys(m).forEach(function(k){if(s&&typeof s[k]!=='undefined'){localStorage.setItem(m[k],JSON.stringify(s[k]));}});}catch(e){}})();`;
+}
+
+function sanitizeSnapshotForPublish(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') return {};
+  const allowedKeys = Object.keys(publishKeyMap);
+  const out = {};
+  for (const k of allowedKeys) {
+    if (typeof snapshot[k] !== 'undefined') out[k] = snapshot[k];
+  }
+  return out;
 }
 
 async function injectIntoIndex(outDir, snapshot) {
@@ -102,6 +109,14 @@ async function injectIntoIndex(outDir, snapshot) {
   } catch {}
 }
 
+async function writeVercelConfig(outDir) {
+  const vercelPath = path.join(outDir, 'vercel.json');
+  const vercelConfig = {
+    rewrites: [{ source: '/(.*)', destination: '/index.html' }]
+  };
+  await fs.writeFile(vercelPath, JSON.stringify(vercelConfig, null, 2), 'utf-8');
+}
+
 async function main() {
   await ensureDir(OUTPUT_BASE);
   buildProject();
@@ -109,12 +124,14 @@ async function main() {
   const outDir = path.join(OUTPUT_BASE, `site-${ts}`);
   await ensureDir(outDir);
   await copyDistTo(outDir);
+  await writeVercelConfig(outDir);
 
   const snapPath = await findLatestSnapshot();
   if (snapPath) {
     const snap = await readSnapshot(snapPath);
     if (snap) {
-      await injectIntoIndex(outDir, snap);
+      const publishSnap = sanitizeSnapshotForPublish(snap);
+      await injectIntoIndex(outDir, publishSnap);
     }
   }
 
