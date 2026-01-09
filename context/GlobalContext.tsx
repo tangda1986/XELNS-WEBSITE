@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { storage } from '../lib/storage';
 import { Product, Banner, Solution, Service, ServiceDetailData, HomePageData, ContactMessage, AboutPageData, ServicePageData, CustomerCase } from '../types';
 import { COMPANY_INFO, DEFAULT_HOME_DATA, DEFAULT_ABOUT_DATA, DEFAULT_SERVICE_PAGE_DATA } from '../constants';
@@ -90,39 +90,76 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [hasSynced, setHasSynced] = useState(false);
+  const cloudAutoSaveTimeoutRef = useRef<number | null>(null);
+  const cloudAutoSaveInFlightRef = useRef(false);
 
-  // Cloud Sync Logic
-  const syncFromCloud = async () => {
+  const showToast = (message: string) => {
+    setToast({ visible: true, message });
+    setTimeout(() => {
+      setToast({ visible: false, message: '' });
+    }, 3000);
+  };
+
+  const refreshData = () => {
+    setProductsState(storage.getProducts());
+    setProductBannersState(storage.getProductBanners());
+    setSolutionBannersState(storage.getSolutionBanners());
+    setAboutBannersState(storage.getAboutBanners());
+    setServiceBannersState(storage.getServiceBanners());
+    setContactBannersState(storage.getContactBanners());
+    setCasesBannersState(storage.getCasesBanners());
+    setCompanyInfoState(storage.getCompanyInfo());
+    setAboutDataState(storage.getAboutData());
+    setServicePageDataState(storage.getServicePageData());
+    setSolutionsState(storage.getSolutions());
+    setCustomerCasesState(storage.getCustomerCases());
+    setServicesState(storage.getServices());
+    setServiceDetailsState(storage.getServiceDetails());
+    setHomePageDataState(storage.getHomePageData());
+    setMessagesState(storage.getMessages());
+  };
+
+  const requestCloudAutoSave = () => {
+    if (!storage.isAuthenticated()) return;
+    if (cloudAutoSaveTimeoutRef.current !== null) {
+      window.clearTimeout(cloudAutoSaveTimeoutRef.current);
+    }
+    cloudAutoSaveTimeoutRef.current = window.setTimeout(async () => {
+      if (cloudAutoSaveInFlightRef.current) return;
+      cloudAutoSaveInFlightRef.current = true;
+      try {
+        const { cloudStorage } = await import('../lib/cloudStorage');
+        await cloudStorage.saveAll(storage.getStateSnapshot());
+      } finally {
+        cloudAutoSaveInFlightRef.current = false;
+      }
+    }, 800);
+  };
+
+  const syncFromCloudInternal = async (silent: boolean) => {
     if (isCloudSyncing) return;
     setIsCloudSyncing(true);
     try {
       const { cloudStorage } = await import('../lib/cloudStorage');
       const data = await cloudStorage.fetchAll();
       if (data && Object.keys(data).length > 0) {
-        // Map cloud keys (which might be simple keys) to storage keys if needed, 
-        // or assume cloud stores the same structure as getStateSnapshot
-        // The api/store.js returns { key: value }, where key is from storage keys (e.g. 'products')
-        // storage.importStateSnapshot expects an object where keys are like 'products', 'productBanners'
-        // The snapshot from storage.getStateSnapshot() has keys: products, productBanners...
-        // Let's verify what we save. We save snapshot.
-        
-        // However, our API saves { products: ..., productBanners: ... } 
-        // The api implementation iterates keys and saves them.
-        // So fetching returns { products: ..., ... }
-        
         const success = storage.importStateSnapshot(data);
         if (success) {
           refreshData();
-          showToast('已从云端拉取最新数据');
+          if (!silent) showToast('已从云端拉取最新数据');
         }
       } else {
-        showToast('云端暂无数据或拉取失败');
+        if (!silent) showToast('云端暂无数据或拉取失败');
       }
     } catch (e) {
       console.error('Auto sync failed', e);
     } finally {
       setIsCloudSyncing(false);
     }
+  };
+
+  const syncFromCloud = async () => {
+    await syncFromCloudInternal(false);
   };
 
   const syncToCloud = async () => {
@@ -155,55 +192,31 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
-  const refreshData = () => {
-    setProductsState(storage.getProducts());
-    setProductBannersState(storage.getProductBanners());
-    setSolutionBannersState(storage.getSolutionBanners());
-    setAboutBannersState(storage.getAboutBanners());
-    setServiceBannersState(storage.getServiceBanners());
-    setContactBannersState(storage.getContactBanners());
-    setCasesBannersState(storage.getCasesBanners());
-    setCompanyInfoState(storage.getCompanyInfo());
-    setAboutDataState(storage.getAboutData());
-    setServicePageDataState(storage.getServicePageData());
-    // Load about page data into context if needed
-    // (not stored on companyInfo) - optional
-    setSolutionsState(storage.getSolutions());
-    setCustomerCasesState(storage.getCustomerCases());
-    setServicesState(storage.getServices());
-    setServiceDetailsState(storage.getServiceDetails());
-    setHomePageDataState(storage.getHomePageData());
-    setMessagesState(storage.getMessages());
-  };
-
   useEffect(() => {
     refreshData();
+    if (!hasSynced) {
+      setHasSynced(true);
+      void syncFromCloudInternal(true);
+    }
   }, []);
 
-  const showToast = (message: string) => {
-    setToast({ visible: true, message });
-    setTimeout(() => {
-      setToast({ visible: false, message: '' });
-    }, 3000);
-  };
-
   // Wrappers to save to storage when state updates
-  const setProducts = (data: Product[]) => { storage.saveProducts(data); setProductsState(data); };
-  const setProductBanners = (data: Banner[]) => { storage.saveProductBanners(data); setProductBannersState(data); };
-  const setSolutionBanners = (data: Banner[]) => { storage.saveSolutionBanners(data); setSolutionBannersState(data); };
-  const setAboutBanners = (data: Banner[]) => { storage.saveAboutBanners(data); setAboutBannersState(data); };
-  const setServiceBanners = (data: Banner[]) => { storage.saveServiceBanners(data); setServiceBannersState(data); };
-  const setContactBanners = (data: Banner[]) => { storage.saveContactBanners(data); setContactBannersState(data); };
-  const setCasesBanners = (data: Banner[]) => { storage.saveCasesBanners(data); setCasesBannersState(data); };
+  const setProducts = (data: Product[]) => { storage.saveProducts(data); setProductsState(data); requestCloudAutoSave(); };
+  const setProductBanners = (data: Banner[]) => { storage.saveProductBanners(data); setProductBannersState(data); requestCloudAutoSave(); };
+  const setSolutionBanners = (data: Banner[]) => { storage.saveSolutionBanners(data); setSolutionBannersState(data); requestCloudAutoSave(); };
+  const setAboutBanners = (data: Banner[]) => { storage.saveAboutBanners(data); setAboutBannersState(data); requestCloudAutoSave(); };
+  const setServiceBanners = (data: Banner[]) => { storage.saveServiceBanners(data); setServiceBannersState(data); requestCloudAutoSave(); };
+  const setContactBanners = (data: Banner[]) => { storage.saveContactBanners(data); setContactBannersState(data); requestCloudAutoSave(); };
+  const setCasesBanners = (data: Banner[]) => { storage.saveCasesBanners(data); setCasesBannersState(data); requestCloudAutoSave(); };
   
-  const setCompanyInfo = (data: typeof COMPANY_INFO) => { storage.saveCompanyInfo(data); setCompanyInfoState(data); };
-  const setSolutions = (data: Solution[]) => { storage.saveSolutions(data); setSolutionsState(data); };
-  const setCustomerCases = (data: CustomerCase[]) => { storage.saveCustomerCases(data); setCustomerCasesState(data); };
-  const setServices = (data: Service[]) => { storage.saveServices(data); setServicesState(data); };
-  const setServiceDetails = (data: Record<string, ServiceDetailData>) => { storage.saveServiceDetails(data); setServiceDetailsState(data); };
-  const setHomePageData = (data: HomePageData) => { storage.saveHomePageData(data); setHomePageDataState(data); };
-  const setAboutData = (data: AboutPageData) => { storage.saveAboutData(data); setAboutDataState(data); };
-  const setServicePageData = (data: ServicePageData) => { storage.saveServicePageData(data); setServicePageDataState(data); };
+  const setCompanyInfo = (data: typeof COMPANY_INFO) => { storage.saveCompanyInfo(data); setCompanyInfoState(data); requestCloudAutoSave(); };
+  const setSolutions = (data: Solution[]) => { storage.saveSolutions(data); setSolutionsState(data); requestCloudAutoSave(); };
+  const setCustomerCases = (data: CustomerCase[]) => { storage.saveCustomerCases(data); setCustomerCasesState(data); requestCloudAutoSave(); };
+  const setServices = (data: Service[]) => { storage.saveServices(data); setServicesState(data); requestCloudAutoSave(); };
+  const setServiceDetails = (data: Record<string, ServiceDetailData>) => { storage.saveServiceDetails(data); setServiceDetailsState(data); requestCloudAutoSave(); };
+  const setHomePageData = (data: HomePageData) => { storage.saveHomePageData(data); setHomePageDataState(data); requestCloudAutoSave(); };
+  const setAboutData = (data: AboutPageData) => { storage.saveAboutData(data); setAboutDataState(data); requestCloudAutoSave(); };
+  const setServicePageData = (data: ServicePageData) => { storage.saveServicePageData(data); setServicePageDataState(data); requestCloudAutoSave(); };
 
   const addMessage = (msg: Omit<ContactMessage, 'id' | 'date' | 'read'>) => {
     const newMessage: ContactMessage = {
@@ -215,18 +228,21 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const newMessages = [newMessage, ...messages];
     storage.saveMessages(newMessages);
     setMessagesState(newMessages);
+    requestCloudAutoSave();
   };
 
   const deleteMessage = (id: string) => {
     const newMessages = messages.filter(m => m.id !== id);
     storage.saveMessages(newMessages);
     setMessagesState(newMessages);
+    requestCloudAutoSave();
   };
 
   const markMessageRead = (id: string) => {
     const newMessages = messages.map(m => m.id === id ? { ...m, read: true } : m);
     storage.saveMessages(newMessages);
     setMessagesState(newMessages);
+    requestCloudAutoSave();
   };
 
   return (
