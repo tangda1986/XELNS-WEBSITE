@@ -194,12 +194,12 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     try {
       const { cloudStorage } = await import('../lib/cloudStorage');
       const snapshot = storage.getStateSnapshot();
-      const success = await cloudStorage.saveAll(snapshot);
-      if (success) {
+      const result = await cloudStorage.saveAll(snapshot);
+      if (result.success) {
         showToast('已成功同步到云端数据库');
         return true;
       } else {
-        showToast('同步失败，请检查网络或配置');
+        showToast(`同步失败: ${result.error || '未知错误'}`);
         return false;
       }
     } catch (e) {

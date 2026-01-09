@@ -236,7 +236,13 @@ const Settings: React.FC = () => {
             从云端拉取覆盖本地
           </button>
           <button 
-            onClick={handleInitDb} 
+            onClick={handleTestConnection} 
+            className="px-4 py-2 text-sm text-gray-500 hover:text-brand-600 underline"
+          >
+            测试云端连接
+          </button>
+          <button 
+            onClick={handleInitDb}  
             disabled={isCloudSyncing}
             className="px-4 py-2 text-sm text-gray-500 hover:text-brand-600 underline"
           >

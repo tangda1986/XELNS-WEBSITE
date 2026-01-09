@@ -39,8 +39,10 @@ export const cloudStorage = {
     return null;
   },
 
-  async saveAll(data: Record<string, any>) {
+  async saveAll(data: Record<string, any>): Promise<{ success: boolean; error?: string }> {
     const bases = cloudStorage.getCandidateBases();
+    let lastError = 'No connection attempts succeeded';
+    
     for (const base of bases) {
       try {
         const url = cloudStorage.resolveUrl('/api/store', base);
@@ -52,12 +54,22 @@ export const cloudStorage = {
           },
           body: JSON.stringify(data)
         });
-        if (res.ok) return true;
+        
+        if (res.ok) return { success: true };
+        
+        const text = await res.text();
+        try {
+            const json = JSON.parse(text);
+            lastError = json.error || `HTTP ${res.status}`;
+        } catch {
+            lastError = `HTTP ${res.status}: ${text.slice(0, 100)}`;
+        }
       } catch (e) {
         console.warn('Cloud storage save failed:', e);
+        lastError = e instanceof Error ? e.message : String(e);
       }
     }
-    return false;
+    return { success: false, error: lastError };
   },
 
   async initDb() {
@@ -72,5 +84,26 @@ export const cloudStorage = {
       }
     }
     return false;
+  },
+
+  async testConnection(): Promise<{ success: boolean; message: string }> {
+    const bases = cloudStorage.getCandidateBases();
+    const results: string[] = [];
+    
+    for (const base of bases) {
+      try {
+        const url = cloudStorage.resolveUrl(`/api/init-db?t=${Date.now()}`, base);
+        const res = await fetch(url, { cache: 'no-store' });
+        if (res.ok) {
+          return { success: true, message: `连接成功 (${url})` };
+        } else {
+          const text = await res.text();
+          results.push(`失败 ${url}: HTTP ${res.status} - ${text.slice(0, 200)}`);
+        }
+      } catch (e) {
+        results.push(`错误 ${base}: ${e}`);
+      }
+    }
+    return { success: false, message: results.join('\n') || '未知错误' };
   }
 };
