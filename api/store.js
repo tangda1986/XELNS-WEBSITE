@@ -1,6 +1,10 @@
 import { sql } from '@vercel/postgres';
 
 export default async function handler(request, response) {
+  if (typeof response.setHeader === 'function') {
+    response.setHeader('Cache-Control', 'no-store, max-age=0');
+  }
+
   if (request.method === 'GET') {
     try {
       const { rows } = await sql`SELECT key, value FROM site_data`;

@@ -92,6 +92,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [hasSynced, setHasSynced] = useState(false);
   const cloudAutoSaveTimeoutRef = useRef<number | null>(null);
   const cloudAutoSaveInFlightRef = useRef(false);
+  const cloudSyncInFlightRef = useRef(false);
 
   const showToast = (message: string) => {
     setToast({ visible: true, message });
@@ -137,7 +138,8 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const syncFromCloudInternal = async (silent: boolean) => {
-    if (isCloudSyncing) return;
+    if (cloudSyncInFlightRef.current) return;
+    cloudSyncInFlightRef.current = true;
     setIsCloudSyncing(true);
     try {
       const { cloudStorage } = await import('../lib/cloudStorage');
@@ -155,6 +157,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       console.error('Auto sync failed', e);
     } finally {
       setIsCloudSyncing(false);
+      cloudSyncInFlightRef.current = false;
     }
   };
 
@@ -198,6 +201,27 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setHasSynced(true);
       void syncFromCloudInternal(true);
     }
+  }, []);
+
+  useEffect(() => {
+    const tick = () => {
+      if (storage.isAuthenticated()) return;
+      void syncFromCloudInternal(true);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+
+    window.addEventListener('focus', tick);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const intervalId = window.setInterval(tick, 30000);
+
+    return () => {
+      window.removeEventListener('focus', tick);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   // Wrappers to save to storage when state updates

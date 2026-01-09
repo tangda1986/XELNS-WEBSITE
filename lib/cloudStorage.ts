@@ -1,7 +1,12 @@
 export const cloudStorage = {
   async fetchAll() {
     try {
-      const res = await fetch('/api/store');
+      const res = await fetch(`/api/store?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       if (!res.ok) return null;
       return await res.json();
     } catch (e) {
@@ -26,7 +31,7 @@ export const cloudStorage = {
 
   async initDb() {
     try {
-      const res = await fetch('/api/init-db');
+      const res = await fetch(`/api/init-db?t=${Date.now()}`, { cache: 'no-store' });
       return res.ok;
     } catch (e) {
       return false;
