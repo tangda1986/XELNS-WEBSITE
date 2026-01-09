@@ -30,7 +30,7 @@ const Settings: React.FC = () => {
     await syncFromCloud();
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -52,7 +52,8 @@ const Settings: React.FC = () => {
     }
 
     storage.saveAdminPassword(newPassword);
-    showToast('密码修改成功！下次登录请使用新密码。');
+    await syncToCloud();
+    showToast('密码修改成功！已同步到云端。');
     setOldPassword('');
     setNewPassword('');
     setConfirmPassword('');
