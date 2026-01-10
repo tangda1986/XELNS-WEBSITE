@@ -20,6 +20,20 @@ const Settings: React.FC = () => {
     else showToast('数据库初始化失败，请检查配置');
   };
 
+  const handleTestConnection = async () => {
+    try {
+      const { cloudStorage } = await import('../../lib/cloudStorage');
+      const res = await cloudStorage.testConnection();
+      if (res.success) {
+        alert(`连接成功！\n${res.message}`);
+      } else {
+        alert(`连接失败！\n${res.message}`);
+      }
+    } catch (e) {
+      alert(`测试出错: ${e}`);
+    }
+  };
+
   const handleSyncToCloud = async () => {
     if (!confirm('确定要将本地数据覆盖到云端吗？')) return;
     await syncToCloud();
