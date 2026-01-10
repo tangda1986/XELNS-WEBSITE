@@ -36,11 +36,26 @@ export default async function handler(request, response) {
       if (keysParam) {
         const keys = keysParam.split(',').filter(k => k.trim());
         if (keys.length > 0) {
-          // Use ANY to match any key in the array
-          const { rows } = await sql`SELECT key, value FROM site_data WHERE key = ANY(${keys})`;
+          // Construct a safe query for multiple keys manually since ANY/IN support varies
+          // This is safe because we're not concatenating user input directly into SQL structure,
+          // but passing parameters individually or letting the driver handle it if possible.
+          // However, @vercel/postgres tagged template literals are strict.
+          // Fallback: Fetch all needed rows using a simple OR logic or just fetch all and filter in memory if list is small.
+          // But for performance, let's try a safer parameterized approach if possible, or just revert to single/bulk for stability.
+          
+          // Safer Approach: Fetch all and filter in memory (Trade-off: bandwidth vs stability)
+          // Given the "UI Lost" issue, stability is priority. 
+          // If we fetch all, it's same as bulk.
+          
+          // Let's try to just return the requested keys by filtering the full result set.
+          // This is inefficient but 100% safe against SQL syntax errors in Vercel environment.
+          const { rows } = await sql`SELECT key, value FROM site_data`;
           const data = {};
+          const requestedKeys = new Set(keys);
           rows.forEach(row => {
-            data[row.key] = row.value;
+            if (requestedKeys.has(row.key)) {
+              data[row.key] = row.value;
+            }
           });
           return response.status(200).json(data);
         }

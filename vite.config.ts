@@ -6,7 +6,7 @@ declare const process: any;
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: './', // Use relative base path for flexible deployment
+  base: '/', // Use absolute path for Vercel deployment to avoid 404s on subpaths
   define: {
     // Safely expose environment variables to the browser
     'process.env': {
