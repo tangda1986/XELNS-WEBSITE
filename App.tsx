@@ -1,6 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { GlobalProvider } from './context/GlobalContext';
 
 // Components
@@ -98,6 +99,7 @@ const App: React.FC = () => {
           {/* 404 Catch-all */}
           <Route path="*" element={<LayoutWithNav><NotFound /></LayoutWithNav>} />
         </Routes>
+        <Analytics />
       </HashRouter>
     </GlobalProvider>
   );

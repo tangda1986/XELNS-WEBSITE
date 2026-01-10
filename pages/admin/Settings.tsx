@@ -127,6 +127,19 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleTestConnection = async () => {
+    try {
+      const res = await fetch('http://localhost:8787/api/test-connection');
+      if (res.ok) {
+        showToast('云端连接成功');
+      } else {
+        alert('云端连接失败');
+      }
+    } catch {
+      alert('测试连接失败：请检查网络和服务器状态');
+    }
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">系统设置</h1>
