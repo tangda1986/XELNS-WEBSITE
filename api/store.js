@@ -6,9 +6,17 @@ export default async function handler(request, response) {
   }
 
   if (request.method === 'GET') {
+    // Enable Vercel Edge Caching:
+    // s-maxage=10: Cache at the edge for 10 seconds (fresh)
+    // stale-while-revalidate=59: Serve stale content for up to 59 seconds while updating in background
+    if (typeof response.setHeader === 'function') {
+      response.setHeader('Cache-Control', 'public, max-age=0, s-maxage=10, stale-while-revalidate=59');
+    }
+
     try {
       const url = new URL(request.url, 'http://localhost');
       const keyParam = url.searchParams.get('key');
+      const keysParam = url.searchParams.get('keys');
       const modeParam = url.searchParams.get('mode');
 
       if (modeParam === 'list') {
@@ -22,6 +30,19 @@ export default async function handler(request, response) {
           return response.status(200).json({ [keyParam]: rows[0].value });
         } else {
           return response.status(200).json({});
+        }
+      }
+
+      if (keysParam) {
+        const keys = keysParam.split(',').filter(k => k.trim());
+        if (keys.length > 0) {
+          // Use ANY to match any key in the array
+          const { rows } = await sql`SELECT key, value FROM site_data WHERE key = ANY(${keys})`;
+          const data = {};
+          rows.forEach(row => {
+            data[row.key] = row.value;
+          });
+          return response.status(200).json(data);
         }
       }
 

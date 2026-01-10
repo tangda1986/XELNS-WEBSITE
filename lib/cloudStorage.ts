@@ -25,24 +25,34 @@ export const cloudStorage = {
       try {
         // Try fetching list of keys first (Granular fetch)
         try {
-          const listUrl = cloudStorage.resolveUrl(`/api/store?mode=list&t=${Date.now()}`, base);
-          const listRes = await fetch(listUrl, { cache: 'no-store' });
+          // Remove timestamp to allow caching
+          const listUrl = cloudStorage.resolveUrl(`/api/store?mode=list`, base);
+          const listRes = await fetch(listUrl); // Allow default cache behavior (or browser cache)
           
           if (listRes.ok) {
             const list = await listRes.json();
             if (Array.isArray(list)) {
               const result: Record<string, any> = {};
-              // Fetch each key individually
-              await Promise.all(list.map(async (item: any) => {
+              const allKeys = list.map((item: any) => item.key);
+              
+              // Batch keys to reduce requests (e.g., 5 keys per request)
+              const BATCH_SIZE = 5;
+              const batches = [];
+              for (let i = 0; i < allKeys.length; i += BATCH_SIZE) {
+                batches.push(allKeys.slice(i, i + BATCH_SIZE));
+              }
+
+              await Promise.all(batches.map(async (batchKeys) => {
                  try {
-                   const keyUrl = cloudStorage.resolveUrl(`/api/store?key=${item.key}&t=${Date.now()}`, base);
-                   const r = await fetch(keyUrl, { cache: 'no-store' });
+                   const keysStr = batchKeys.join(',');
+                   const keyUrl = cloudStorage.resolveUrl(`/api/store?keys=${encodeURIComponent(keysStr)}`, base);
+                   const r = await fetch(keyUrl);
                    if (r.ok) {
                      const val = await r.json();
                      Object.assign(result, val);
                    }
                  } catch (e) {
-                   console.warn(`Failed to fetch key ${item.key}`, e);
+                   console.warn(`Failed to fetch keys batch ${batchKeys}`, e);
                  }
               }));
               
@@ -55,14 +65,9 @@ export const cloudStorage = {
            console.warn('Granular fetch failed, attempting bulk fetch', e);
         }
 
-        // Fallback to bulk fetch
-        const url = cloudStorage.resolveUrl(`/api/store?t=${Date.now()}`, base);
-        const res = await fetch(url, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
+        // Fallback to bulk fetch (Removed timestamp)
+        const url = cloudStorage.resolveUrl(`/api/store`, base);
+        const res = await fetch(url);
         if (!res.ok) continue;
         return await res.json();
       } catch (e) {
