@@ -7,6 +7,24 @@ export default async function handler(request, response) {
 
   if (request.method === 'GET') {
     try {
+      const url = new URL(request.url, 'http://localhost');
+      const keyParam = url.searchParams.get('key');
+      const modeParam = url.searchParams.get('mode');
+
+      if (modeParam === 'list') {
+        const { rows } = await sql`SELECT key, updated_at FROM site_data`;
+        return response.status(200).json(rows);
+      }
+
+      if (keyParam) {
+        const { rows } = await sql`SELECT value FROM site_data WHERE key = ${keyParam}`;
+        if (rows.length > 0) {
+          return response.status(200).json({ [keyParam]: rows[0].value });
+        } else {
+          return response.status(200).json({});
+        }
+      }
+
       const { rows } = await sql`SELECT key, value FROM site_data`;
       const data = {};
       rows.forEach(row => {

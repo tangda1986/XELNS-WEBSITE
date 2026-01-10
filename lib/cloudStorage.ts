@@ -23,6 +23,39 @@ export const cloudStorage = {
     const bases = cloudStorage.getCandidateBases();
     for (const base of bases) {
       try {
+        // Try fetching list of keys first (Granular fetch)
+        try {
+          const listUrl = cloudStorage.resolveUrl(`/api/store?mode=list&t=${Date.now()}`, base);
+          const listRes = await fetch(listUrl, { cache: 'no-store' });
+          
+          if (listRes.ok) {
+            const list = await listRes.json();
+            if (Array.isArray(list)) {
+              const result: Record<string, any> = {};
+              // Fetch each key individually
+              await Promise.all(list.map(async (item: any) => {
+                 try {
+                   const keyUrl = cloudStorage.resolveUrl(`/api/store?key=${item.key}&t=${Date.now()}`, base);
+                   const r = await fetch(keyUrl, { cache: 'no-store' });
+                   if (r.ok) {
+                     const val = await r.json();
+                     Object.assign(result, val);
+                   }
+                 } catch (e) {
+                   console.warn(`Failed to fetch key ${item.key}`, e);
+                 }
+              }));
+              
+              if (Object.keys(result).length > 0) {
+                 return result;
+              }
+            }
+          }
+        } catch (e) {
+           console.warn('Granular fetch failed, attempting bulk fetch', e);
+        }
+
+        // Fallback to bulk fetch
         const url = cloudStorage.resolveUrl(`/api/store?t=${Date.now()}`, base);
         const res = await fetch(url, {
           cache: 'no-store',
@@ -45,25 +78,44 @@ export const cloudStorage = {
     
     for (const base of bases) {
       try {
-        const url = cloudStorage.resolveUrl('/api/store', base);
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-cache'
-          },
-          body: JSON.stringify(data)
-        });
+        // Split data into individual keys to avoid payload limits
+        const keys = Object.keys(data);
+        let allSuccess = true;
         
-        if (res.ok) return { success: true };
-        
-        const text = await res.text();
-        try {
-            const json = JSON.parse(text);
-            lastError = json.error || `HTTP ${res.status}`;
-        } catch {
-            lastError = `HTTP ${res.status}: ${text.slice(0, 100)}`;
+        // Save sequentially to ensure reliability and avoid connection limits
+        for (const key of keys) {
+            const payload = { [key]: data[key] };
+            try {
+                const url = cloudStorage.resolveUrl('/api/store', base);
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!res.ok) {
+                    allSuccess = false;
+                    const text = await res.text();
+                    try {
+                        const json = JSON.parse(text);
+                        lastError = json.error || `HTTP ${res.status}`;
+                    } catch {
+                        lastError = `HTTP ${res.status}: ${text.slice(0, 100)}`;
+                    }
+                    console.error(`Failed to save key ${key}:`, lastError);
+                }
+            } catch (e) {
+                allSuccess = false;
+                lastError = e instanceof Error ? e.message : String(e);
+                console.error(`Error saving key ${key}:`, e);
+            }
         }
+        
+        if (allSuccess) return { success: true };
+        
       } catch (e) {
         console.warn('Cloud storage save failed:', e);
         lastError = e instanceof Error ? e.message : String(e);
