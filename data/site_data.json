@@ -1,21 +1,6 @@
 {
   "products": [
     {
-      "id": "p3",
-      "title": "自动化在线贴标系统",
-      "category": "自动化",
-      "description": "完全自主研发的打印贴标一体机。支持侧贴、角贴、圆瓶贴等多种模式。可与流水线无缝对接，实现无人化作业，效率高达 60件/分钟。",
-      "image": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=800",
-      "images": [],
-      "features": [
-        "高精度伺服控制",
-        "智能防漏贴检测",
-        "异常自动报警剔除",
-        "支持实时数据上传"
-      ],
-      "details": "<p>详细规格参数请联系客服索取。</p>"
-    },
-    {
       "id": "p_1768542566743",
       "title": "新北洋BP520/BP530标签条码打印机",
       "category": "打印设备",
@@ -259,11 +244,11 @@
           "type": "download_list",
           "items": [
             {
-              "title": "BARTENDER",
-              "desc": "描述",
-              "url": "#",
+              "title": "Bartender10条码编辑软件",
+              "desc": "提取码: 78s4 ",
+              "url": "https://pan.baidu.com/s/1N4hVL1INEOo3PG0u1VuBJA?pwd=78s4",
               "date": "",
-              "size": "",
+              "size": "文件大小(e.g.245.5MB)",
               "content": ""
             }
           ],
@@ -275,11 +260,11 @@
           "type": "download_list",
           "items": [
             {
-              "title": "TSC",
-              "desc": "描述",
-              "url": "#",
+              "title": "TSC  LPA3100T条码打印机驱动",
+              "desc": "提取码: 1djc",
+              "url": "https://pan.baidu.com/s/1fikJDN9CNahlH-srfScCXA?pwd=1djc",
               "date": "",
-              "size": "",
+              "size": "文件大小(e.g.45.7MB)",
               "content": ""
             }
           ],
@@ -465,5 +450,5 @@
       "createdAt": 1768542213330
     }
   ],
-  "__publishedId": "2026-01-16T06:03:14.290Z"
+  "__publishedId": "2026-01-16T06:18:24.561Z"
 }
