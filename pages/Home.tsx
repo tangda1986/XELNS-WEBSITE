@@ -152,61 +152,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Customer Cases Slider */}
-      {customerCases.length > 0 && (
-        <section className="py-24 bg-blue-50">
-          <div className="max-w-7xl mx-auto px-6">
-            <h2 className="text-3xl font-bold text-center mb-12">成功案例</h2>
-            <CaseSlider cases={customerCases} />
-          </div>
-        </section>
-      )}
-
-  {/* 3. Featured Products - Minimalist Cards */}
-      <section className="py-32 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div>
-              <span className="text-brand-600 font-bold tracking-widest uppercase text-sm mb-2 block">Selected Products</span>
-              <h2 className="text-4xl font-bold text-slate-900">核心产品精选</h2>
-            </div>
-            <Link to="/products" className="group flex items-center gap-2 text-slate-600 font-medium hover:text-brand-600 transition-colors pb-1 border-b border-slate-300 hover:border-brand-600">
-              View All Products <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {featuredProducts.map((product, idx) => (
-              <Link to={`/products/${product.id}`} key={product.id} className="group bg-white rounded-none md:rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col">
-                <div className="h-72 overflow-hidden relative bg-gray-100">
-                  <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 flex items-center justify-center">
-                     <span className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 px-6 py-2 bg-white/90 backdrop-blur rounded-full text-slate-900 font-bold text-sm">
-                       查看详情
-                     </span>
-                  </div>
-                </div>
-                <div className="p-8 flex-1 flex flex-col relative">
-                   <div className="absolute top-0 right-0 transform -translate-y-1/2 mr-8 bg-brand-600 text-white px-4 py-1 text-xs font-bold uppercase tracking-wider shadow-lg">
-                      {product.category}
-                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-brand-600 transition-colors">{product.title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3">
-                    {product.description}
-                  </p>
-                  <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
-                     <span className="text-slate-400 text-xs font-mono">{product.id}</span>
-                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-colors">
-                        <ArrowRight size={14} />
-                     </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* 4. Solutions - Dark Mode Technical Vibe */}
       <section className="py-32 bg-slate-900 text-white relative">
          <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
@@ -253,6 +198,61 @@ const Home: React.FC = () => {
             </div>
          </div>
       </section>
+
+  {/* 3. Featured Products - Minimalist Cards */}
+      <section className="py-32 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div>
+              <span className="text-brand-600 font-bold tracking-widest uppercase text-sm mb-2 block">Selected Products</span>
+              <h2 className="text-4xl font-bold text-slate-900">核心产品精选</h2>
+            </div>
+            <Link to="/products" className="group flex items-center gap-2 text-slate-600 font-medium hover:text-brand-600 transition-colors pb-1 border-b border-slate-300 hover:border-brand-600">
+              View All Products <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {featuredProducts.map((product, idx) => (
+              <Link to={`/products/${product.id}`} key={product.id} className="group bg-white rounded-none md:rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col">
+                <div className="h-72 overflow-hidden relative bg-gray-100">
+                  <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 flex items-center justify-center">
+                     <span className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 px-6 py-2 bg-white/90 backdrop-blur rounded-full text-slate-900 font-bold text-sm">
+                       查看详情
+                     </span>
+                  </div>
+                </div>
+                <div className="p-8 flex-1 flex flex-col relative">
+                   <div className="absolute top-0 right-0 transform -translate-y-1/2 mr-8 bg-brand-600 text-white px-4 py-1 text-xs font-bold uppercase tracking-wider shadow-lg">
+                      {product.category}
+                   </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-brand-600 transition-colors">{product.title}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3">
+                    {product.description}
+                  </p>
+                  <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
+                     <span className="text-slate-400 text-xs font-mono">{product.id}</span>
+                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                        <ArrowRight size={14} />
+                     </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Cases Slider */}
+      {customerCases.length > 0 && (
+        <section className="py-24 bg-blue-50">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-bold text-center mb-12">成功案例</h2>
+            <CaseSlider cases={customerCases} />
+          </div>
+        </section>
+      )}
 
       {/* 5. Services Banner - Clean & Professional */}
       <section className="py-24 bg-brand-600 relative overflow-hidden">
